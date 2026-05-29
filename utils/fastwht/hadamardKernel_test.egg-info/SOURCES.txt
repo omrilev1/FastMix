@@ -1,0 +1,7 @@
+hadamardKernel.i
+setup.py
+../hadamard.cpp
+hadamardKernel_test.egg-info/PKG-INFO
+hadamardKernel_test.egg-info/SOURCES.txt
+hadamardKernel_test.egg-info/dependency_links.txt
+hadamardKernel_test.egg-info/top_level.txt

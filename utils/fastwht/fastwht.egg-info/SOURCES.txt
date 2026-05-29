@@ -1,0 +1,8 @@
+hadamardKernel.i
+my_setup.py
+setup.py
+../hadamard.cpp
+fastwht.egg-info/PKG-INFO
+fastwht.egg-info/SOURCES.txt
+fastwht.egg-info/dependency_links.txt
+fastwht.egg-info/top_level.txt
