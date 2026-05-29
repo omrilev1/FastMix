@@ -593,7 +593,7 @@ synthetic_ols_datasets = {
 # datasets_run_list = ['black_friday', 'years', 'beijing', \
 #                    'rossman', 'airline', 'synthetic_correlated', 'large_min_eigval']
 
-datasets_run_list = ['black_friday']
+datasets_run_list = ['beijing', 'black_friday']
 
 # Start looping over datasets 
 for dataset_type in datasets_run_list:
@@ -613,7 +613,6 @@ for dataset_type in datasets_run_list:
         XY = np.hstack([X_train, y_train.reshape(-1, 1)])   # shape (n, d+1)
     else:
         C_max, X_train, y_train,\
-            X_test, y_test, \
             lambda_min, lambda_max, lambda_min_XY, lambda_max_XY, \
             n, d, dataset_title = GetDataset(dataset_type)
 
@@ -662,13 +661,10 @@ for dataset_type in datasets_run_list:
     # Baseline: OLS
     ols_model = LinearRegression(fit_intercept=False)  # alpha is the regularization strength
     ols_model.fit(X_train, y_train)
-    ridge_y_pred = ols_model.predict(X_test)
-    baseline_test_mse = np.sum((y_test - ridge_y_pred)**2)
     ridge_y_pred_train = ols_model.predict(X_train)
     baseline_train_mse = np.sum((y_train - ridge_y_pred_train)**2)
 
     print('=============================')
-    print('baseline test mse is  ' + str(baseline_test_mse/len(y_test)))
     print('baseline train mse is ' + str(baseline_train_mse/n))
     print('=============================')
 
@@ -712,7 +708,6 @@ for dataset_type in datasets_run_list:
                 raise ValueError("k_val_FastIHM_inner must be at most n")
     
         X_train_T = X_train.T
-        baseline_test_mse_mean = baseline_test_mse / len(y_test)
         baseline_train_mse_mean = baseline_train_mse / n
         identity_d = np.eye(d)
         tri_upper_idx = np.triu_indices(d) if use_adassp else None
@@ -872,17 +867,11 @@ for dataset_type in datasets_run_list:
                 t1 = perf_counter_ns()
                 time_FastIHS_baseline += (t1 - t0)/1e9
     
-                y_test_pred = X_test @ theta_fast_IHS_baseline
-                curr_test_mse_fast_IHS_baseline[iter_idx] = (
-                    np.mean((y_test - y_test_pred)**2)
-                )
                 y_train_pred = X_train @ theta_fast_IHS_baseline
                 curr_train_mse_fast_IHS_baseline[iter_idx] = (
                     np.mean((y_train - y_train_pred)**2)
                 )
     
-            fast_ihs_baseline_test_mean = np.mean(curr_test_mse_fast_IHS_baseline)
-            fast_ihs_baseline_test_std = 1.96 * np.std(curr_test_mse_fast_IHS_baseline) / np.sqrt(iters)
             fast_ihs_baseline_train_mean = np.mean(curr_train_mse_fast_IHS_baseline)
             fast_ihs_baseline_train_std = 1.96 * np.std(curr_train_mse_fast_IHS_baseline) / np.sqrt(iters)
             fast_ihs_baseline_time_mean = time_FastIHS_baseline / iters
@@ -1255,60 +1244,40 @@ for dataset_type in datasets_run_list:
                 ############################### Evaluate ###############################
                 # Evaluate on original test data
                 if use_linmix:
-                    y_test_pred = X_test @ theta_LinMix
-                    curr_test_mse_linmix[iter_idx] = np.mean((y_test - y_test_pred)**2)
                     y_train_pred = X_train @ theta_LinMix
                     curr_train_mse_linmix[iter_idx] = np.mean((y_train - y_train_pred)**2)
     
                 if use_ihm:
-                    y_test_pred = X_test @ theta_IHM_T_iter
-                    curr_test_mse_IHM[iter_idx] = np.mean((y_test - y_test_pred)**2)
                     y_train_pred = X_train @ theta_IHM_T_iter
                     curr_train_mse_IHM[iter_idx] = np.mean((y_train - y_train_pred)**2)
     
                 if use_fast_linmix:
-                    y_test_pred = X_test @ theta_fast_LinMix
-                    curr_test_mse_fast_linmix[iter_idx] = np.mean((y_test - y_test_pred)**2)
                     y_train_pred = X_train @ theta_fast_LinMix
                     curr_train_mse_fast_linmix[iter_idx] = np.mean((y_train - y_train_pred)**2)
     
                 if use_fast_ihm:
-                    y_test_pred = X_test @ theta_fast_IHM_T_iter
-                    curr_test_mse_fast_IHM[iter_idx] = np.mean((y_test - y_test_pred)**2)
                     y_train_pred = X_train @ theta_fast_IHM_T_iter
                     curr_train_mse_fast_IHM[iter_idx] = np.mean((y_train - y_train_pred)**2)
     
                 if use_adassp:
-                    y_test_pred = X_test @ theta_adassp
-                    curr_test_mse_adassp[iter_idx] = np.mean((y_test - y_test_pred)**2)
                     y_train_pred = X_train @ theta_adassp
                     curr_train_mse_adassp[iter_idx] = np.mean((y_train - y_train_pred)**2)
     
             # MSEs and confidence intervals
             if use_linmix:
-                mse_for_sigmas.append(np.mean(curr_test_mse_linmix))
-                mse_for_sigmas_std.append(1.96 * np.std(curr_test_mse_linmix)/np.sqrt(iters))
                 train_mse_for_sigmas.append(np.mean(curr_train_mse_linmix))
                 train_mse_for_sigmas_std.append(1.96 * np.std(curr_train_mse_linmix)/np.sqrt(iters))
             if use_fast_linmix:
-                mse_for_sigmas_fast.append(np.mean(curr_test_mse_fast_linmix))
-                mse_for_sigmas_fast_std.append(1.96 * np.std(curr_test_mse_fast_linmix)/np.sqrt(iters))
                 train_mse_for_sigmas_fast.append(np.mean(curr_train_mse_fast_linmix))
                 train_mse_for_sigmas_fast_std.append(1.96 * np.std(curr_train_mse_fast_linmix)/np.sqrt(iters))
             if use_ihm:
-                mse_for_sigmas_IHM.append(np.mean(curr_test_mse_IHM))
-                mse_for_sigmas_std_IHM.append(1.96 * np.std(curr_test_mse_IHM)/np.sqrt(iters))
                 train_mse_for_sigmas_IHM.append(np.mean(curr_train_mse_IHM))
                 train_mse_for_sigmas_std_IHM.append(1.96 * np.std(curr_train_mse_IHM)/np.sqrt(iters))
             if use_fast_ihm:
-                mse_for_sigmas_fast_IHM.append(np.mean(curr_test_mse_fast_IHM))
-                mse_for_sigmas_std_fast_IHM.append(1.96 * np.std(curr_test_mse_fast_IHM)/np.sqrt(iters))
                 train_mse_for_sigmas_fast_IHM.append(np.mean(curr_train_mse_fast_IHM))
                 train_mse_for_sigmas_fast_IHM_std.append(1.96 * np.std(curr_train_mse_fast_IHM)/np.sqrt(iters))
                 
             if use_adassp:
-                mse_for_sigmas_adassp.append(np.mean(curr_test_mse_adassp))
-                mse_for_sigmas_adassp_std.append(1.96 * np.std(curr_test_mse_adassp)/np.sqrt(iters))
                 train_mse_for_sigmas_adassp.append(np.mean(curr_train_mse_adassp))
                 train_mse_for_sigmas_adassp_std.append(1.96 * np.std(curr_train_mse_adassp)/np.sqrt(iters))
     
@@ -1329,24 +1298,6 @@ for dataset_type in datasets_run_list:
                 runtime_results_eps["AdaSSP"] = time_AdaSSP / iters
                 runtime_averages["AdaSSP"].append(runtime_results_eps["AdaSSP"])
             per_epsilon_runtime_log.append((float(eps), runtime_results_eps))
-    
-            print('====================')
-            if use_linmix:
-                print('Test Risk Sketch and Solve: '      + str(np.mean(curr_test_mse_linmix)))
-            if use_fast_linmix:
-                print('Test Risk Fast Sketch and Solve: ' + str(np.mean(curr_test_mse_fast_linmix)))
-            if use_ihm:
-                print('Test Risk Hessian ' + str(iters_IHM) + ' iters: ' + str(np.mean(curr_test_mse_IHM)))
-            if use_fast_ihm:
-                print('Test Risk Fast Hessian ' + str(iters_IHM) + ' iters: ' + str(np.mean(curr_test_mse_fast_IHM)))
-            if use_gaussian_ihs_baseline:
-                print('Test Risk Gaussian IHS baseline ' + str(iters_IHM) + ' iters: ' + str(gaussian_ihs_baseline_test_mean))
-            if use_fast_ihs_baseline:
-                print('Test Risk Fast IHS baseline ' + str(iters_IHM) + ' iters: ' + str(fast_ihs_baseline_test_mean))
-            if use_gaussian_sketch_solve_baseline:
-                print('Test Risk Gaussian sketch-and-solve baseline: ' + str(gaussian_sketch_solve_baseline_test_mean))
-            if use_adassp:
-                print('Test Risk AdaSSP: ' + str(np.mean(curr_test_mse_adassp)))
     
             print('====================')
             if use_linmix:
