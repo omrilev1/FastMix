@@ -28,7 +28,7 @@ def dot_into(lhs, rhs, out):
 # Direct Laplace privatization of the sketch regularization parameter.
 def direct_private_sigma_tilde(gamma, m_hat, delta_hat, lambda_hat, eta, tau, rng):
     z1 = rng.laplace()
-    m_tilde = max(1.0, m_hat + eta * delta_hat * (tau - z1))
+    m_tilde = max(0.0, m_hat + eta * delta_hat * (tau - z1))
 
     z2 = rng.laplace()
     lambda_tilde = max(0.0, lambda_hat - eta * (1.0 + 2.0*m_tilde) * (tau - z2))
